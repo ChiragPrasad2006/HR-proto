@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Manager</title>
+</head>
+<body>
+  <h2>Employee Data</h2>
+  <button onclick="loadEmployees()">Load Employees</button>
+  <button onclick="recalculate()">Recalculate Scores</button>
+  <div id="employeeList"></div> <!-- keep this id -->
+
+  <h3>Add Employee</h3>
+  <input type="text" id="empName" placeholder="Employee Name">
+  <input type="text" id="empPosition" placeholder="Position">
+  <button onclick="addEmployee()">Add Employee</button>
+
+  <!-- ✅ Make sure script is loaded at the bottom -->
+  <script src="script.js"></script>
+</body>
+</html>
