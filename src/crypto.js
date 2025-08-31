@@ -1,8 +1,10 @@
 // ---------- crypto helpers (browser) ----------
-const SERVER_PUB_URL = "src/keys/public.pem"; // or serverpub.php if you created it
-const STORAGE_KEY = "hr_proto_client_keys_v1"; // where client stores exported keys
+// new
 
-const textEncoder = new TextEncoder();
+const SERVER_PUB_URL = "serverpub.php"; // or serverpub.php if you created it
+const STORAGE_KEY = "data/employees.json"; // where client stores exported keys
+
+const textEncoder = new TextEncoder();  
 const textDecoder = new TextDecoder();
 
 // util: arrayBuffer <-> base64
@@ -138,10 +140,12 @@ async function rsaWrapKeyWithServer(serverPubKey, keyAndIvArrayBuffer) {
 }
 // RSA-OAEP decrypt (unwrap) with client's private key
 async function rsaUnwrapKeyWithClient(clientPrivateKey, wrappedB64) {
-  const wrapped = b642ab(wrappedB64);
+  console.log("🔑 Wrapped ekey (raw from server):", wrappedB64); // add this
+  const wrapped = b642ab(wrappedB64); // fails here if string is bad
   const raw = await crypto.subtle.decrypt({ name: "RSA-OAEP" }, clientPrivateKey, wrapped);
-  return raw; // ArrayBuffer (key||iv)
+  return raw; 
 }
+
 
 // ---------- high-level: encrypt payload for server ----------
 async function encryptPayloadForServer(plaintextObj, serverPubKey, clientKeys) {
@@ -162,12 +166,15 @@ async function encryptPayloadForServer(plaintextObj, serverPubKey, clientKeys) {
   const ekey_b64 = await rsaWrapKeyWithServer(serverPubKey, keyiv.buffer);
 
   // 4) return object to send; include client's public PEM
-  return {
+  const payload = {
     ekey: ekey_b64,
     ct: ct_b64,
     tag: tag_b64,
     clientPub: clientKeys.pubPem
   };
+  console.log("📤 Sending encrypted ekey:", payload.ekey);
+  return payload;
+
 }
 
 // ---------- high-level: decrypt server response ----------
