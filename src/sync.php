@@ -150,27 +150,33 @@ if (!$clientPub) {
     exit;
 }
 
-// Ensure PEM formatting
-$clientPub = preg_replace(
-    '/(-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----)/',
-    "$1\n",
-    trim($clientPub)
-);
-$clientPub = preg_replace('/\s+/', "\n", $clientPub);
+// Ensure PEM formatting of clientPub
+$clientPub = trim($clientPub);
 
-$clientPub = preg_replace('/\s+/', '', $clientPub); // strip all whitespace
-$clientPub = chunk_split($clientPub, 64, "\n");     // wrap at 64 chars
+// Fix header/footer spacing
+if (strpos($clientPub, "BEGIN PUBLIC KEY") === false) {
+    $clientPub = "-----BEGIN PUBLIC KEY-----\n" . $clientPub . "\n-----END PUBLIC KEY-----";
+}
+
+// Normalize line breaks to 64 chars per line
+// Normalize clientPub
+$clientPub = trim($clientPub);
+$clientPub = str_replace(["\r", "\n"], "", $clientPub); // remove all line breaks
+$clientPub = preg_replace('/-----BEGIN PUBLIC KEY-----|-----END PUBLIC KEY-----/', '', $clientPub);
+$clientPub = chunk_split($clientPub, 64, "\n");
 $clientPub = "-----BEGIN PUBLIC KEY-----\n" . $clientPub . "-----END PUBLIC KEY-----\n";
 
 $clientKey = openssl_pkey_get_public($clientPub);
 if (!$clientKey) {
     echo json_encode([
         "status" => "error",
-        "message" => "Invalid client public key",
+        "message" => "Invalid clientPub formatting",
         "openssl_error" => openssl_error_string()
     ]);
     exit;
 }
+
+
 
 // ✅ Debugging logs (go to Apache/PHP error log)
 error_log("WrappedKeyResp length: " . strlen($wrappedKeyResp));
@@ -185,6 +191,19 @@ if ($wrappedKeyResp === false) {
     ]);
     exit;
 }
+
+// Debug logs
+error_log("👉 About to send response");
+error_log("ekey length: " . strlen(base64_encode($wrappedKeyResp)));
+error_log("ct length: " . strlen(base64_encode($ciphertext)));
+error_log("tag length: " . strlen(base64_encode($tag)));
+
+echo json_encode([
+    "ekey" => base64_encode($wrappedKeyResp ?: ""),
+    "ct"   => base64_encode($ciphertext ?: ""),
+    "tag"  => base64_encode($tag ?: "")
+]);
+
 
 if (!openssl_public_encrypt($key_bin . $iv_bin, $wrappedKeyResp, $clientKey, OPENSSL_PKCS1_OAEP_PADDING)) {
     echo json_encode([
