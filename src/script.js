@@ -1,74 +1,24 @@
 let employees = [];
-let serverPubKey = null;
-let clientKeys = null;
 
-// ---------- INIT KEYS ----------
-async function initCrypto() {
-  // Load/generate client keypair
-  clientKeys = await initClientKeys();
-  // Load server public key
-  serverPubKey = await loadServerPublicKey();
-  console.log("🔑 Crypto ready");
-}
-
-// ---------- SECURE FETCH HELPER ----------
-async function secureFetch(payload) {
-  if (!serverPubKey || !clientKeys) {
-    await initCrypto();
-  }
-
-  // Encrypt request
-  const encrypted = await encryptPayloadForServer(payload, serverPubKey, clientKeys);
-
-  // Send to server
-  let res = await fetch("sync.php", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(encrypted)
-  });
-
-  let respObj = await res.json();
-
-  // Decrypt response
-  const decrypted = await decryptServerResponse(respObj, clientKeys.privateKey);
-  return decrypted;
-}
-
-// ---------- LOAD EMPLOYEES ----------
 async function loadEmployees() {
-  const data = await sendToServer({ action: "get" });
-  console.log(" Decrypted server response:", data);
-
-  if (data && data.employees) {
-    employees = data.employees;
-  } else if (Array.isArray(data)) {
-    employees = data;
-  } else {
-    console.error("Unexpected response format:", data);
-    employees = [];
-  }
-
+  let res = await fetch("getdata.php");
+  employees = await res.json();
   renderEmployees();
 }
 
-
-
-// ---------- RENDER ----------
 function renderEmployees() {
-  if (!employees || !Array.isArray(employees)) {
-    console.warn("⚠️ Employees is not an array:", employees);
-    document.getElementById("employeeList").innerHTML = "<p>No employees found</p>";
-    return;
-  }
-
   const rows = employees.map(emp => `
     <tr>
       <td>${emp.name}</td>
       <td>${emp.position}</td>
+
+      <!-- Hours Worked (editable) -->
       <td>
         <input type="number" min="0" value="${emp.hoursWorked ?? 0}"
                onchange="updateField(${emp.id}, 'hoursWorked', this.value)">
       </td>
+
+      <!-- Difficulty (dropdown shown as words, stored as integer) -->
       <td>
         <select onchange="updateField(${emp.id}, 'difficulty', this.value)">
           <option value="1" ${Number(emp.difficulty)===1 ? 'selected' : ''}>Easy</option>
@@ -76,10 +26,13 @@ function renderEmployees() {
           <option value="3" ${Number(emp.difficulty)===3 ? 'selected' : ''}>Hard</option>
         </select>
       </td>
+
+      <!-- Projects Completed (editable) -->
       <td>
         <input type="number" min="0" value="${emp.projectsCompleted ?? 0}"
                onchange="updateField(${emp.id}, 'projectsCompleted', this.value)">
       </td>
+
       <td>${emp.score ?? 0}</td>
       <td><button onclick="removeEmployee(${emp.id})">Remove</button></td>
     </tr>
@@ -101,8 +54,6 @@ function renderEmployees() {
   `;
 }
 
-
-// ---------- ADD ----------
 async function addEmployee() {
   let name = document.getElementById("empName").value;
   let position = document.getElementById("empPosition").value;
@@ -112,51 +63,64 @@ async function addEmployee() {
     return;
   }
 
-  const data = await secureFetch({
-    action: "add",
-    name,
-    position,
-    score: 0,
-    hoursWorked: 0,
-    difficulty: 1,
-    projectsCompleted: 0
+  let res = await fetch("updatedata.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "add",
+      name,
+      position,
+      score: 0,
+      hoursWorked: 0,
+      difficulty: 1, 
+      projectsCompleted: 0
+    })
   });
 
+  let data = await res.json();
   employees = data.employees;
   renderEmployees();
 }
 
-// ---------- REMOVE ----------
 async function removeEmployee(id) {
-  const data = await secureFetch({ action: "remove", id });
+  let res = await fetch("updatedata.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "remove", id })
+  });
+
+  let data = await res.json();
   employees = data.employees;
   renderEmployees();
 }
 
-// ---------- RECALCULATE ----------
 async function recalculate() {
-  const data = await secureFetch({ action: "recalculate" });
-  employees = data.employees;
-  renderEmployees();
+  let res = await fetch("calculate.php");
+  let msg = await res.text();
+  alert(msg);
+  await loadEmployees(); // reload fresh data AFTER calculate.php finishes
 }
 
-// ---------- UPDATE FIELD ----------
 async function updateField(id, field, value) {
+  // ensure numbers for numeric fields
   if (['hoursWorked','projectsCompleted','difficulty'].includes(field)) {
     value = parseInt(value, 10) || 0;
   }
 
-  const payload = { action: "update", id };
+  const payload = { action: 'update', id };
   payload[field] = value;
 
-  const data = await secureFetch(payload);
-  if (data.status !== "success") {
-    alert("Update failed");
+  const res = await fetch('updatedata.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  if (data.status !== 'success') {
+    alert('Update failed');
     return;
   }
   employees = data.employees;
   renderEmployees();
 }
-
-// Run crypto init at start
-initCrypto();

@@ -1,5 +1,5 @@
 #include <iostream>
-#include "../include/nlohmann/json.hpp"
+#include <C:/xampp/htdocs/hr-proto/include/nlohmann/json.hpp>
 using json = nlohmann::json;
 
 int main() {

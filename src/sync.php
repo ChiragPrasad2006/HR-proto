@@ -185,7 +185,7 @@ if ($wrappedKeyResp === false) {
     ]);
     exit;
 }
-
+    
 if (!openssl_public_encrypt($key_bin . $iv_bin, $wrappedKeyResp, $clientKey, OPENSSL_PKCS1_OAEP_PADDING)) {
     echo json_encode([
         "status" => "error",
