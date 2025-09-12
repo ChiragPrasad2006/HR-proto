@@ -9,7 +9,7 @@ header("Content-Type: application/json; charset=utf-8");
 try {
     $plain = load_encrypted_json_file($encPath, $keyPath);
     if ($plain === false) {
-        echo json_encode([]); // no file yet
+        echo json_encode([]); 
         exit;
     }
     echo $plain;

@@ -1,5 +1,5 @@
 <?php
-// aes_file.php - helper for AES-256-GCM encryption of employees.json
+// encryption of employees.json
 
 function load_key_from_file(string $path) {
     if (!file_exists($path)) throw new Exception("Key file missing: $path");
@@ -7,15 +7,15 @@ function load_key_from_file(string $path) {
     return base64_decode($b64);
 }
 
-// Run once to generate key file
+// generate key file
 function generate_save_key(string $path) {
-    if (file_exists($path)) return; // don't overwrite
-    $key = random_bytes(32); // 256-bit
+    if (file_exists($path)) return; 
+    $key = random_bytes(32);
     file_put_contents($path, base64_encode($key));
     @chmod($path, 0600);
 }
 
-// Encrypt plaintext
+// encrypt plaintext
 function encrypt_string_for_file(string $plaintext, string $key): array {
     $iv = random_bytes(12);
     $tag = "";

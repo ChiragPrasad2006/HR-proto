@@ -98,11 +98,10 @@ async function recalculate() {
   let res = await fetch("calculate.php");
   let msg = await res.text();
   alert(msg);
-  await loadEmployees(); // reload fresh data AFTER calculate.php finishes
+  await loadEmployees(); 
 }
 
 async function updateField(id, field, value) {
-  // ensure numbers for numeric fields
   if (['hoursWorked','projectsCompleted','difficulty'].includes(field)) {
     value = parseInt(value, 10) || 0;
   }
