@@ -9,7 +9,7 @@ async function loadEmployees() {
     if (!Array.isArray(employees)) employees = [];
     renderEmployees();
   } catch (err) {
-    console.error("❌ loadEmployees failed:", err);
+    console.error("loadEmployees failed:", err);
     alert("Failed to load employees. Check server.");
   }
 }
