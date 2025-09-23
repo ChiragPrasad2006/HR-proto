@@ -1,5 +1,5 @@
 let employees = [];
-const SERVER_URL = "http://192.168.1.24/hr-proto/src/";
+const SERVER_URL = "http://192.168.1.24/hr-proto/src/";   // Change to your server's IP here
 
 async function loadEmployees() {
   try {
