@@ -1,7 +1,7 @@
 <?php
 require __DIR__ . "/aes_file.php";
 
-$keyPath = "C:\\xampp\htdocs\hr-proto\src\keys\aes_key.b64";
+$keyPath = __DIR__ . "/keys/aes_key.b64";
 $encPath = __DIR__ . "/data/employees.json.enc";
 
 // load

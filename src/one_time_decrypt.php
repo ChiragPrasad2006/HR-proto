@@ -14,7 +14,9 @@ try {
         echo "❌ No encrypted file found.";
     } else {
         file_put_contents($decPath, $plain);
-        echo "✅ Decrypted file created at: $decPath";
+        header("Content-Type: application/json");
+        echo $plain; // ✅ just send the JSON, no extra text
+
     }
 } catch (Exception $e) {
     echo "❌ Error: " . $e->getMessage();
