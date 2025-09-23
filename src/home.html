@@ -3,19 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <title>Employee Manager</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h2>Employee Data</h2>
-  <button onclick="loadEmployees()">Load Employees</button>
-  <button onclick="recalculate()">Recalculate Scores</button>
-  <button onclick="importFromServer()">⬇ Import</button>
-  <button onclick="exportToServer()">⬆ Export</button>
+  <div class="header-section">
+    <button onclick="loadEmployees()">Load Employees</button>
+    <button onclick="recalculate()">Recalculate Scores</button>
+    <button onclick="importFromServer()">⬇ Import</button>
+    <button onclick="exportToServer()">⬆ Export</button>
+</div>
   <div id="employeeList"></div> 
 
   <h3>Add Employee</h3>
-  <input type="text" id="empName" placeholder="Employee Name">
-  <input type="text" id="empPosition" placeholder="Position">
-  <button onclick="addEmployee()">Add Employee</button>
+  <div class="add-employee-form">
+    <input type="text" id="empName" placeholder="Employee Name">
+    <input type="text" id="empPosition" placeholder="Position">
+    <button onclick="addEmployee()">Add Employee</button>
+  </div>
 
   <script src="script.js"></script>
 </body>

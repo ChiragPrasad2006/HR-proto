@@ -1,0 +1,180 @@
+/* --- General Body and Typography --- */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f4f7f9;
+    color: #333;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+}
+
+h1, h2, h3 {
+    color: #1a2a4b;
+    margin-bottom: 20px;
+}
+
+/* --- Container for Login and Home Pages --- */
+.container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 800px; /* Increased max-width for more horizontal space */
+    text-align: center;
+    box-sizing: border-box;
+}
+
+/* --- Form and Input Elements (Login Page) --- */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 20px;
+    align-items: center; /* Center the form elements */
+}
+
+label {
+    align-self: flex-start;
+    font-weight: 600;
+    color: #555;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="number"],
+select {
+    /* Remove width: 100% here for specific inputs if they should be smaller */
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+    transition: border-color 0.3s;
+    max-width: 300px; /* Limit max-width for smaller, centered inputs */
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+/* --- Buttons --- */
+button {
+    background-color: #007bff;
+    color: #fff;
+    padding: 8px 16px; /* Reduced padding for smaller buttons */
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px; /* Slightly smaller font size */
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.1s;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    white-space: nowrap; /* Prevent button text from wrapping */
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+/* --- Employee List Table (Home Page) --- */
+#employeeList {
+    margin-top: 30px;
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+table, th, td {
+    border: 1px solid #e0e0e0;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    white-space: nowrap;
+}
+
+th {
+    background-color: #f0f3f6;
+    font-weight: 600;
+    color: #444;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #f1f7fc;
+}
+
+/* --- Utility Classes and Adjustments --- */
+.header-section {
+    display: flex; /* Makes the container a flexbox container */
+    justify-content: center; /* Centers items horizontally */
+    gap: 10px; /* Adds space between items */
+    margin-bottom: 20px;
+    flex-wrap: wrap; /* Allows items to wrap if the screen is too narrow */
+}
+
+.salary-field {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.salary-input {
+    flex-grow: 1; /* Make the input fill available space */
+}
+.toggle-password {
+    background-color: #007bff;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    font-size: 14px;
+}
+
+.add-employee-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px; /* Increase this value to add more space */
+    margin-top: 20px;
+    justify-content: center;
+    align-items: center;
+}
+
+.add-employee-form input {
+    width: auto; /* Allow inputs to size naturally */
+    flex-grow: 0; /* Prevent inputs from growing to fill space */
+    max-width: 200px; /* Make "Add Employee" inputs smaller and centered */
+}
+
+/* Remove or adjust the media query if you want the desktop layout on smaller screens */
+/* @media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    .container {
+        padding: 20px;
+    }
+    .header-section, .add-employee-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+} */

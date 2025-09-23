@@ -5,8 +5,13 @@ $keyPath = __DIR__ . "/keys/aes_key.b64";
 $encPath = __DIR__ . "/data/employees.json.enc";
 
 // load
-$plain = load_encrypted_json_file($encPath, $keyPath);
-$employees = $plain ? json_decode($plain, true) : [];
+try {
+    $plain = load_encrypted_json_file($encPath, $keyPath);
+    $employees = $plain ? json_decode($plain, true) : [];
+} catch (Exception $e) {
+    $employees = [];
+}
+if (!is_array($employees)) $employees = [];
 
 // run score.exe
 $cmd = __DIR__ . "/score.exe";

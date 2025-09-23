@@ -1,9 +1,9 @@
 let employees = [];
+const SERVER_URL = "http://192.168.1.24/hr-proto/src/";
 
-// =================== LOAD & RENDER ===================
 async function loadEmployees() {
   try {
-    const res = await fetch("getdata.php");
+    const res = await fetch(SERVER_URL + "getdata.php");
     if (!res.ok) throw new Error("Failed to load employees");
     employees = await res.json();
     if (!Array.isArray(employees)) employees = [];
@@ -12,6 +12,15 @@ async function loadEmployees() {
     console.error("❌ loadEmployees failed:", err);
     alert("Failed to load employees. Check server.");
   }
+}
+
+function toggleSalary(button) {
+    const input = button.parentNode.querySelector('.salary-input');
+    if (input.type === "password") {
+        input.type = "text";
+    } else {
+        input.type = "password";
+    }
 }
 
 function renderEmployees() {
@@ -38,6 +47,13 @@ function renderEmployees() {
             onchange="updateField(${emp.id}, 'projectsCompleted', this.value)"></td>
 
       <td>${emp.score ?? 0}</td>
+      <td>
+            <div class="salary-field">
+                <input type="number" class="salary-input" value="${emp.salary ?? 0}" 
+                    onchange="updateField(${emp.id}, 'salary', this.value)">
+                <button class="toggle-password" onclick="toggleSalary(this)">Show</button>
+            </div>
+        </td>
       <td><button onclick="removeEmployee(${emp.id})">Remove</button></td>
     </tr>
   `).join("");
@@ -46,7 +62,7 @@ function renderEmployees() {
     <table border="1" cellpadding="5" cellspacing="0">
       <tr>
         <th>Name</th><th>Position</th><th>Hours Worked</th>
-        <th>Difficulty</th><th>Projects Completed</th><th>Score</th><th>Action</th>
+        <th>Difficulty</th><th>Projects Completed</th><th>Score</th><th>Salary</th><th>Action</th>
       </tr>
       ${rows}
     </table>
@@ -111,7 +127,7 @@ async function recalculate() {
 // =================== IMPORT / EXPORT ===================
 async function importFromServer() {
   try {
-    let res = await fetch("http://192.168.1.7/hr-proto/get_export.php");
+    let res = await fetch(SERVER_URL + "get_export.php");
     if (!res.ok) throw new Error("Failed to fetch data from server");
     let data = await res.json();
 
@@ -138,7 +154,7 @@ async function exportToServer() {
     let data = await res.json();
 
     // Send to remote server
-    await fetch("http://192.168.1.7/hr-proto/save_export.php", {
+    await fetch(SERVER_URL + "save_export.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data)

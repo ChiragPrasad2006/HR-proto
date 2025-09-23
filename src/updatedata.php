@@ -31,10 +31,11 @@ if ($action === "add") {
         "hoursWorked"=>$input["hoursWorked"] ?? 0,
         "difficulty"=>$input["difficulty"] ?? 1,
         "projectsCompleted"=>$input["projectsCompleted"] ?? 0,
-        "score"=>0
+        "score"=>0,
+        "salary"=>0
     ];
 } elseif ($action === "remove") {
-    $id = $input["id"];
+    $id = $input["id"]; 
     $employees = array_values(array_filter($employees, fn($e)=>$e["id"]!=$id));
 } elseif ($action === "update") {
     $id = $input["id"];
@@ -43,10 +44,11 @@ if ($action === "add") {
             if (isset($input["hoursWorked"])) $emp["hoursWorked"]=(int)$input["hoursWorked"];
             if (isset($input["difficulty"])) $emp["difficulty"]=(int)$input["difficulty"];
             if (isset($input["projectsCompleted"])) $emp["projectsCompleted"]=(int)$input["projectsCompleted"];
+            if (isset($input["salary"])) $emp["salary"]=(int)$input["salary"];
         }
     }
-}elseif ($action === "replace_all") {
-    $employees = $input["data"];
+} elseif ($action === "overwrite_all") {
+    $employees = $input["employees"];
 }
 
 // Save encrypted

@@ -56,24 +56,4 @@ function load_encrypted_json_file(string $filePath, string $keyPath) {
     $key = load_key_from_file($keyPath);
     return decrypt_string_from_file($blob["ct"], $blob["iv"], $blob["tag"], $key);
 }
-
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-require_once __DIR__ . "/aes_file.php";
-
-$keyPath = __DIR__ . "/keys/aes_key.b64";
-$encPath = __DIR__ . "/data/employees.json.enc";
-$decPath = __DIR__ . "/data/employees.json";
-
-try {
-    $plain = load_encrypted_json_file($encPath, $keyPath);
-    if ($plain === false) {
-        echo "❌ No encrypted file found.";
-    } else {
-        file_put_contents($decPath, $plain);
-        echo "✅ Decrypted file created at: $decPath";
-    }
-} catch (Exception $e) {
-    echo "❌ Error: " . $e->getMessage();
-}
+// The rest of the file (from `error_reporting` downwards) should be deleted.

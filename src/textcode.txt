@@ -1,0 +1,531 @@
+//*aes_file.php:
+<?php
+// encryption of employees.json
+
+function load_key_from_file(string $path) {
+    if (!file_exists($path)) throw new Exception("Key file missing: $path");
+    $b64 = trim(file_get_contents($path));
+    return base64_decode($b64);
+}
+
+// generate key file
+function generate_save_key(string $path) {
+    if (file_exists($path)) return; 
+    $key = random_bytes(32);
+    file_put_contents($path, base64_encode($key));
+    @chmod($path, 0600);
+}
+
+// encrypt plaintext
+function encrypt_string_for_file(string $plaintext, string $key): array {
+    $iv = random_bytes(12);
+    $tag = "";
+    $ciphertext = openssl_encrypt($plaintext, "aes-256-gcm", $key, OPENSSL_RAW_DATA, $iv, $tag);
+    if ($ciphertext === false) throw new Exception("AES encrypt failed");
+    return [
+        "ct"  => base64_encode($ciphertext),
+        "iv"  => base64_encode($iv),
+        "tag" => base64_encode($tag)
+    ];
+}
+
+// Decrypt
+function decrypt_string_from_file(string $ct_b64, string $iv_b64, string $tag_b64, string $key): string {
+    $ct = base64_decode($ct_b64);
+    $iv = base64_decode($iv_b64);
+    $tag = base64_decode($tag_b64);
+    $pt = openssl_decrypt($ct, "aes-256-gcm", $key, OPENSSL_RAW_DATA, $iv, $tag);
+    if ($pt === false) throw new Exception("AES decrypt failed or tag mismatch");
+    return $pt;
+}
+
+// Save encrypted JSON
+function save_encrypted_json_file(string $jsonStr, string $filePath, string $keyPath) {
+    $key = load_key_from_file($keyPath);
+    $enc = encrypt_string_for_file($jsonStr, $key);
+    $store = json_encode($enc, JSON_PRETTY_PRINT);
+    $tmp = $filePath . ".tmp";
+    file_put_contents($tmp, $store);
+    rename($tmp, $filePath);
+}
+
+// Load decrypted JSON
+function load_encrypted_json_file(string $filePath, string $keyPath) {
+    if (!file_exists($filePath)) return false;
+    $blob = json_decode(file_get_contents($filePath), true);
+    if (!isset($blob["ct"], $blob["iv"], $blob["tag"])) throw new Exception("Invalid encrypted file format");
+    $key = load_key_from_file($keyPath);
+    return decrypt_string_from_file($blob["ct"], $blob["iv"], $blob["tag"], $key);
+}
+
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once __DIR__ . "/aes_file.php";
+
+$keyPath = __DIR__ . "/keys/aes_key.b64";
+$encPath = __DIR__ . "/data/employees.json.enc";
+$decPath = __DIR__ . "/data/employees.json";
+
+try {
+    $plain = load_encrypted_json_file($encPath, $keyPath);
+    if ($plain === false) {
+        echo "❌ No encrypted file found.";
+    } else {
+        file_put_contents($decPath, $plain);
+        echo "✅ Decrypted file created at: $decPath";
+    }
+} catch (Exception $e) {
+    echo "❌ Error: " . $e->getMessage();
+}
+
+
+
+
+
+//*calculate.php
+<?php
+require __DIR__ . "/aes_file.php";
+
+$keyPath = __DIR__ . "/keys/aes_key.b64";
+$encPath = __DIR__ . "/data/employees.json.enc";
+
+// load
+$plain = load_encrypted_json_file($encPath, $keyPath);
+$employees = $plain ? json_decode($plain, true) : [];
+
+// run score.exe
+$cmd = __DIR__ . "/score.exe";
+$descriptorspec = [
+    0 => ["pipe", "r"],
+    1 => ["pipe", "w"],
+    2 => ["pipe", "w"]
+];
+
+$process = proc_open($cmd, $descriptorspec, $pipes);
+
+if (is_resource($process)) {
+    fwrite($pipes[0], json_encode($employees));
+    fclose($pipes[0]);
+    $result = stream_get_contents($pipes[1]);
+    fclose($pipes[1]);
+    $errors = stream_get_contents($pipes[2]);
+    fclose($pipes[2]);
+    proc_close($process);
+
+    if ($errors) {
+        echo "Error: " . $errors;
+        exit;
+    }
+
+    // save back encrypted
+    save_encrypted_json_file($result, $encPath, $keyPath);
+    echo "Scores updated!";
+}
+
+
+
+//*get_export.php
+<?php
+// get_export.php
+header("Access-Control-Allow-Origin: *"); // Allow all origins
+header("Content-Type: application/json");
+
+$path = __DIR__ . "/data/employees.json";
+
+if (!file_exists($path)) {
+    http_response_code(404);
+    echo json_encode(["status" => "error", "message" => "No file found"]);
+    exit;
+}
+
+echo file_get_contents($path);
+?>
+
+
+
+//*home.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Employee Manager</title>
+</head>
+<body>
+  <h2>Employee Data</h2>
+  <button onclick="loadEmployees()">Load Employees</button>
+  <button onclick="recalculate()">Recalculate Scores</button>
+  <button onclick="importFromServer()">⬇ Import</button>
+  <button onclick="exportToServer()">⬆ Export</button>
+  <div id="employeeList"></div> 
+
+  <h3>Add Employee</h3>
+  <input type="text" id="empName" placeholder="Employee Name">
+  <input type="text" id="empPosition" placeholder="Position">
+  <button onclick="addEmployee()">Add Employee</button>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+
+
+
+//*login.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+        <h1>Login</h1>
+        <form onsubmit="check(event)">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required>
+
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required>
+
+            <button type="submit">Login</button>
+        </form>
+    <script>
+        function check(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === 'password') {
+                window.location.href = 'home.html';
+            } else {
+                alert('Invalid credentials');
+            }
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+//*one_time_decrypt.php
+<?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once __DIR__ . "/aes_file.php";  // ✅ ensure only loaded once
+
+$keyPath = __DIR__ . "/keys/aes_key.b64";
+$encPath = __DIR__ . "/data/employees.json.enc";
+$decPath = __DIR__ . "/data/employees.json";
+
+try {
+    $plain = load_encrypted_json_file($encPath, $keyPath);
+    if ($plain === false) {
+        echo "❌ No encrypted file found.";
+    } else {
+        file_put_contents($decPath, $plain);
+        header("Content-Type: application/json");
+        echo $plain; // ✅ just send the JSON, no extra text
+
+    }
+} catch (Exception $e) {
+    echo "❌ Error: " . $e->getMessage();
+}
+
+
+
+
+
+//*save_export.php
+<?php
+// save_export.php
+header("Access-Control-Allow-Origin: *");
+header("Content-Type: application/json");
+
+$input = file_get_contents("php://input");
+if (!$input) {
+    http_response_code(400);
+    echo json_encode(["status" => "error", "message" => "No input received"]);
+    exit;
+}
+
+// Save to data/employees.json (overwrite)
+$path = __DIR__ . "/data/employees.json";
+file_put_contents($path, $input);
+
+echo json_encode(["status" => "success"]);
+?>
+
+
+
+
+
+//*save_local.php
+<?php
+header("Content-Type: application/json");
+$data = json_decode(file_get_contents("php://input"), true);
+
+if (!isset($data["data"])) {
+    echo json_encode(["status"=>"error","message"=>"No data provided"]);
+    exit;
+}
+
+$encPath = __DIR__ . "/data/employees.json.enc";
+file_put_contents($encPath, $data["data"]);
+
+echo json_encode(["status"=>"success"]);
+?>
+
+
+
+
+
+//*score.cpp
+#include <iostream>
+#include "../include/nlohmann/json.hpp"
+using json = nlohmann::json;
+
+int main() {
+    json employees;
+    std::cin >> employees;
+
+    for (auto &emp : employees) {
+        int hours = emp.value("hoursWorked", 0);
+        int difficulty = emp.value("difficulty", 1);
+        int projects = emp.value("projectsCompleted", 0);
+
+        int score = (hours / 10) + (difficulty * 5) + (projects * 20);
+        emp["score"] = score;
+    }
+
+    std::cout << employees.dump(4);
+    return 0;
+}
+
+
+
+
+
+//*script.js
+let employees = [];
+
+// =================== LOAD & RENDER ===================
+async function loadEmployees() {
+  try {
+    const res = await fetch("getdata.php");
+    if (!res.ok) throw new Error("Failed to load employees");
+    employees = await res.json();
+    if (!Array.isArray(employees)) employees = [];
+    renderEmployees();
+  } catch (err) {
+    console.error("❌ loadEmployees failed:", err);
+    alert("Failed to load employees. Check server.");
+  }
+}
+
+function renderEmployees() {
+  const rows = employees.map(emp => `
+    <tr>
+      <td>${emp.name}</td>
+      <td>${emp.position}</td>
+
+      <!-- Hours Worked -->
+      <td><input type="number" min="0" value="${emp.hoursWorked ?? 0}"
+            onchange="updateField(${emp.id}, 'hoursWorked', this.value)"></td>
+
+      <!-- Difficulty -->
+      <td>
+        <select onchange="updateField(${emp.id}, 'difficulty', this.value)">
+          <option value="1" ${Number(emp.difficulty)===1 ? 'selected' : ''}>Easy</option>
+          <option value="2" ${Number(emp.difficulty)===2 ? 'selected' : ''}>Medium</option>
+          <option value="3" ${Number(emp.difficulty)===3 ? 'selected' : ''}>Hard</option>
+        </select>
+      </td>
+
+      <!-- Projects Completed -->
+      <td><input type="number" min="0" value="${emp.projectsCompleted ?? 0}"
+            onchange="updateField(${emp.id}, 'projectsCompleted', this.value)"></td>
+
+      <td>${emp.score ?? 0}</td>
+      <td><button onclick="removeEmployee(${emp.id})">Remove</button></td>
+    </tr>
+  `).join("");
+
+  document.getElementById("employeeList").innerHTML = `
+    <table border="1" cellpadding="5" cellspacing="0">
+      <tr>
+        <th>Name</th><th>Position</th><th>Hours Worked</th>
+        <th>Difficulty</th><th>Projects Completed</th><th>Score</th><th>Action</th>
+      </tr>
+      ${rows}
+    </table>
+  `;
+}
+
+// =================== CRUD OPS ===================
+async function addEmployee() {
+  const name = document.getElementById("empName").value;
+  const position = document.getElementById("empPosition").value;
+
+  if (!name || !position) return alert("Fill all fields");
+
+  const res = await fetch("updatedata.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      action: "add", name, position, score: 0,
+      hoursWorked: 0, difficulty: 1, projectsCompleted: 0
+    })
+  });
+
+  const data = await res.json();
+  employees = data.employees;
+  renderEmployees();
+}
+
+async function removeEmployee(id) {
+  const res = await fetch("updatedata.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "remove", id })
+  });
+
+  const data = await res.json();
+  employees = data.employees;
+  renderEmployees();
+}
+
+async function updateField(id, field, value) {
+  if (['hoursWorked','projectsCompleted','difficulty'].includes(field))
+    value = parseInt(value, 10) || 0;
+
+  const res = await fetch("updatedata.php", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action: "update", id, [field]: value })
+  });
+
+  const data = await res.json();
+  employees = data.employees;
+  renderEmployees();
+}
+
+async function recalculate() {
+  const res = await fetch("calculate.php");
+  const msg = await res.text();
+  alert(msg);
+  await loadEmployees();
+}
+
+// =================== IMPORT / EXPORT ===================
+async function importFromServer() {
+  try {
+    let res = await fetch("http://192.168.1.7/hr-proto/get_export.php");
+    if (!res.ok) throw new Error("Failed to fetch data from server");
+    let data = await res.json();
+
+    // Send to updatedata.php to overwrite encrypted store
+    await fetch("updatedata.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "overwrite_all", employees: data })
+    });
+
+    alert("✅ Import successful!");
+    await loadEmployees();
+  } catch (err) {
+    console.error("❌ Import failed:", err);
+    alert("Import failed: " + err.message);
+  }
+}
+
+async function exportToServer() {
+  try {
+    // Get decrypted data from our encrypted store
+    let res = await fetch("getdata.php");
+    if (!res.ok) throw new Error("Failed to read local employees");
+    let data = await res.json();
+
+    // Send to remote server
+    await fetch("http://192.168.1.7/hr-proto/save_export.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    alert("✅ Export successful!");
+  } catch (err) {
+    console.error("❌ Export failed:", err);
+    alert("Export failed: " + err.message);
+  }
+}
+
+
+
+
+
+
+
+
+
+//*updatedata.php
+<?php
+require __DIR__ . "/aes_file.php";
+
+$keyPath = __DIR__ . "/keys/aes_key.b64";
+$encPath = __DIR__ . "/data/employees.json.enc";
+
+// Load employees
+try {
+    $plain = load_encrypted_json_file($encPath, $keyPath);
+    $employees = $plain ? json_decode($plain, true) : [];
+    if (!is_array($employees)) $employees = [];
+} catch (Exception $e) {
+    $employees = [];
+}
+
+$input = json_decode(file_get_contents("php://input"), true);
+if (!$input || !isset($input["action"])) {
+    echo json_encode(["status"=>"error","message"=>"Invalid request"]);
+    exit;
+}
+
+$action = $input["action"];
+
+// Actions
+if ($action === "add") {
+    $newId = rand(100000,999999);
+    $employees[] = [
+        "id"=>$newId,
+        "name"=>$input["name"] ?? "Unknown",
+        "position"=>$input["position"] ?? "Unknown",
+        "hoursWorked"=>$input["hoursWorked"] ?? 0,
+        "difficulty"=>$input["difficulty"] ?? 1,
+        "projectsCompleted"=>$input["projectsCompleted"] ?? 0,
+        "score"=>0
+    ];
+} elseif ($action === "remove") {
+    $id = $input["id"];
+    $employees = array_values(array_filter($employees, fn($e)=>$e["id"]!=$id));
+} elseif ($action === "update") {
+    $id = $input["id"];
+    foreach ($employees as &$emp) {
+        if ($emp["id"] == $id) {
+            if (isset($input["hoursWorked"])) $emp["hoursWorked"]=(int)$input["hoursWorked"];
+            if (isset($input["difficulty"])) $emp["difficulty"]=(int)$input["difficulty"];
+            if (isset($input["projectsCompleted"])) $emp["projectsCompleted"]=(int)$input["projectsCompleted"];
+        }
+    }
+}elseif ($action === "replace_all") {
+    $employees = $input["data"];
+}
+
+// Save encrypted
+$jsonStr = json_encode($employees, JSON_PRETTY_PRINT);
+save_encrypted_json_file($jsonStr, $encPath, $keyPath);
+
+// Respond
+echo json_encode(["status"=>"success","employees"=>$employees]);
