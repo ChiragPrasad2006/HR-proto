@@ -3,7 +3,7 @@
 2# put ur ipv4 address in /src/launcher.py & /src/script.js
 
 3# open the folder containing the src file, right click, select open in terminal option,
-    type *pip istall pyinstaller*
+    type *pip install pyinstaller*
     after installation, on the same terminal,
     type *PyInstaller --onefile --noconsole launcher.py *
 
