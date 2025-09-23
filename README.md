@@ -13,3 +13,7 @@
 5# run the launcher.exe file
 
 6# (optional:) put the launcher.exe file iside /laucher folder outside the /src folder.
+
+
+#NOTE:
+this app needs xampp/php server to host
