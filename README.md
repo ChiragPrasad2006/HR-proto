@@ -3,7 +3,7 @@
 2# put ur ipv4 address in /src/launcher.py & /src/script.js
 
 3# open the folder containing the src file, right click, select open in terminal option,
-    type *pip istall pyinstaller*
+    type *pip install pyinstaller*
     after installation, on the same terminal,
     type *PyInstaller --onefile --noconsole launcher.py *
 
@@ -13,3 +13,7 @@
 5# run the launcher.exe file
 
 6# (optional:) put the launcher.exe file iside /laucher folder outside the /src folder.
+
+
+#NOTE:
+this app needs xampp/php server to host
