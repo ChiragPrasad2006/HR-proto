@@ -1,5 +1,5 @@
 let employees = [];
-const SERVER_URL = "http://192.168.1.24/hr-proto/src/";   // Change to your server's IP here
+const SERVER_URL = "http://172.31.91.1/hr-proto/src/";
 
 async function loadEmployees() {
   try {
@@ -138,10 +138,10 @@ async function importFromServer() {
       body: JSON.stringify({ action: "overwrite_all", employees: data })
     });
 
-    alert("✅ Import successful!");
+    alert("Import successful!");
     await loadEmployees();
   } catch (err) {
-    console.error("❌ Import failed:", err);
+    console.error("Import failed:", err);
     alert("Import failed: " + err.message);
   }
 }
@@ -160,9 +160,9 @@ async function exportToServer() {
       body: JSON.stringify(data)
     });
 
-    alert("✅ Export successful!");
+    alert("Export successful!");
   } catch (err) {
-    console.error("❌ Export failed:", err);
+    console.error("Export failed:", err);
     alert("Export failed: " + err.message);
   }
 }

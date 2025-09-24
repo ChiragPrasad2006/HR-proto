@@ -56,4 +56,3 @@ function load_encrypted_json_file(string $filePath, string $keyPath) {
     $key = load_key_from_file($keyPath);
     return decrypt_string_from_file($blob["ct"], $blob["iv"], $blob["tag"], $key);
 }
-// The rest of the file (from `error_reporting` downwards) should be deleted.

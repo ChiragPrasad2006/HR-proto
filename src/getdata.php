@@ -3,7 +3,6 @@ require __DIR__ . "/aes_file.php";
 
 $keyPath = __DIR__ . "/keys/aes_key.b64";
 $encPath = __DIR__ . "/data/employees.json.enc";
-$decPath = __DIR__ . "/data/employees.json";
 
 header("Content-Type: application/json; charset=utf-8");
 

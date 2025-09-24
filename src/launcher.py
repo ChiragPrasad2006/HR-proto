@@ -7,12 +7,11 @@ import base64
 # --- CONFIG ---
 XAMPP_PATH = r"C:/xampp"
 KEY_PATH   = "C:/xampp/htdocs/hr-proto/src/keys/aes_key.b64"
-APP_URL    = "http://192.168.1.24/hr-proto/src/login.html"  #change to your server's IP
-# --------------
+APP_URL    = "http://172.31.91.1/hr-proto/src/login.html"
 
 def generate_aes_key():
     if not os.path.exists(KEY_PATH):
-        print("🔑 No AES key found. Generating new key...")
+        print("No AES key found. Generating new key..")
         os.makedirs(os.path.dirname(KEY_PATH), exist_ok=True)
         key = os.urandom(32)  # 256-bit AES key
         with open(KEY_PATH, "wb") as f:
