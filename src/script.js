@@ -69,7 +69,7 @@ function renderEmployees() {
   `;
 }
 
-// =================== CRUD OPS ===================
+// CRUD OPS
 async function addEmployee() {
   const name = document.getElementById("empName").value;
   const position = document.getElementById("empPosition").value;
@@ -124,7 +124,7 @@ async function recalculate() {
   await loadEmployees();
 }
 
-// =================== IMPORT / EXPORT ===================
+// IMPORT / EXPORT 
 async function importFromServer() {
   try {
     let res = await fetch(SERVER_URL + "get_export.php");
